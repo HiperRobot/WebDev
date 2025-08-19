@@ -1,2 +1,2 @@
 # WebDev
-WebDev Classs Repo
+WebDev Class Repo
