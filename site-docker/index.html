@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Teste: Docker + Apache</title>
+<style>
+  :root{--bg:#f6f8fb;--card:#ffffff;--accent:#2b8cff;--muted:#6b7280}
+  html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#eef2ff 0%,var(--bg) 60%);color:#111}
+  .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:32px}
+  .card{max-width:860px;width:100%;background:var(--card);border-radius:12px;box-shadow:0 10px 30px rgba(32,40,60,0.08);padding:28px;display:grid;grid-template-columns:1fr 260px;gap:20px}
+  h1{margin:0 0 8px;font-size:28px;color:#0b2546}
+  p{margin:0 0 12px;color:var(--muted)}
+  .left{display:flex;flex-direction:column;gap:12px}
+  .badge{display:inline-block;background:linear-gradient(90deg,#eef7ff,#f0fbff);color:var(--accent);padding:6px 10px;border-radius:999px;font-weight:600;font-size:13px}
+  pre{background:#f7f9fc;padding:10px;border-radius:8px;color:#0b2546;margin:0;overflow:auto}
+  .meta{font-size:13px;color:var(--muted)}
+  .right{display:flex;flex-direction:column;gap:12px;align-items:stretch}
+  .panel{background:#fbfdff;border-radius:8px;padding:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.6)}
+  button{background:var(--accent);color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;font-weight:600}
+  button.secondary{background:#eef3ff;color:var(--accent);font-weight:700}
+  footer{grid-column:1/-1;margin-top:8px;text-align:center;color:var(--muted);font-size:13px}
+  @media(max-width:760px){.card{grid-template-columns:1fr} .right{order:2}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <main class="card" role="main" aria-labelledby="title">
+    <section class="left">
+      <div>
+        <span class="badge">Docker + Apache</span>
+      </div>
+      <h1 id="title">Olá, mundo!</h1>
+      <p>Esta página simples confirma que o servidor Apache dentro do container está servindo conteúdo corretamente.</p>
+
+      <div class="panel">
+        <div class="meta">Acesso:</div>
+        <pre>http://localhost:8080/</pre>
+        <div class="meta" style="margin-top:8px">Arquivo servido:</div>
+        <pre>/usr/local/apache2/htdocs/index.html</pre>
+      </div>
+
+      <div class="panel" style="display:flex;gap:8px;align-items:center">
+        <button id="ping">Verificar servidor</button>
+        <button class="secondary" id="user">Info do navegador</button>
+      </div>
+    </section>
+
+    <aside class="right">
+      <div class="panel">
+        <div class="meta">Status do teste</div>
+        <div id="status" style="margin-top:8px;color:#0b2546;font-weight:700">Pronto</div>
+      </div>
+
+      <div class="panel">
+        <div class="meta">Informações</div>
+        <div style="margin-top:8px"><strong>Última verificação:</strong> <span id="time">—</span></div>
+        <div style="margin-top:6px;font-size:13px;color:var(--muted)"><span id="agent">—</span></div>
+      </div>
+    </aside>
+
+    <footer>
+      Atualize a página ou clique em "Verificar servidor". Se o Docker Compose mapear 8080 → 80, abra http://localhost:8080
+    </footer>
+  </main>
+</div>
+
+<script>
+  const statusEl = document.getElementById('status');
+  const timeEl = document.getElementById('time');
+  const agentEl = document.getElementById('agent');
+  const pingBtn = document.getElementById('ping');
+  const userBtn = document.getElementById('user');
+
+  function setTime(){ timeEl.textContent = new Date().toLocaleString(); }
+  setTime();
+
+  pingBtn.addEventListener('click', async () => {
+    statusEl.textContent = 'Verificando...';
+    try {
+      // Tentativa simples de fetch para o próprio recurso raiz
+      const resp = await fetch(window.location.href, { method: 'GET', cache: 'no-store' });
+      statusEl.textContent = resp.ok ? 'Servidor respondeu: OK (' + resp.status + ')' : 'Resposta: ' + resp.status;
+    } catch (err) {
+      statusEl.textContent = 'Erro: não foi possível conectar ao servidor';
+    }
+    setTime();
+  });
+
+  userBtn.addEventListener('click', () => {
+    agentEl.textContent = navigator.userAgent;
+    setTime();
+  });
