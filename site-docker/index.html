@@ -1,93 +1,205 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Teste: Docker + Apache</title>
-<style>
-  :root{--bg:#f6f8fb;--card:#ffffff;--accent:#2b8cff;--muted:#6b7280}
-  html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#eef2ff 0%,var(--bg) 60%);color:#111}
-  .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:32px}
-  .card{max-width:860px;width:100%;background:var(--card);border-radius:12px;box-shadow:0 10px 30px rgba(32,40,60,0.08);padding:28px;display:grid;grid-template-columns:1fr 260px;gap:20px}
-  h1{margin:0 0 8px;font-size:28px;color:#0b2546}
-  p{margin:0 0 12px;color:var(--muted)}
-  .left{display:flex;flex-direction:column;gap:12px}
-  .badge{display:inline-block;background:linear-gradient(90deg,#eef7ff,#f0fbff);color:var(--accent);padding:6px 10px;border-radius:999px;font-weight:600;font-size:13px}
-  pre{background:#f7f9fc;padding:10px;border-radius:8px;color:#0b2546;margin:0;overflow:auto}
-  .meta{font-size:13px;color:var(--muted)}
-  .right{display:flex;flex-direction:column;gap:12px;align-items:stretch}
-  .panel{background:#fbfdff;border-radius:8px;padding:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.6)}
-  button{background:var(--accent);color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;font-weight:600}
-  button.secondary{background:#eef3ff;color:var(--accent);font-weight:700}
-  footer{grid-column:1/-1;margin-top:8px;text-align:center;color:var(--muted);font-size:13px}
-  @media(max-width:760px){.card{grid-template-columns:1fr} .right{order:2}}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jogo da Velha</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #22d3ee;
+      --x: #60a5fa;
+      --o: #f472b6;
+      --win: #34d399;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 800px at 80% -10%, #1f2937 0%, var(--bg) 40%);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .card {
+      width: 100%;
+      max-width: 480px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      padding: 20px 20px 24px;
+    }
+    .header {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      margin-bottom: 16px;
+    }
+    .title { font-size: 20px; font-weight: 700; letter-spacing: .3px; }
+    .status { font-size: 14px; color: var(--muted); }
+    .board {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; 
+      margin: 12px 0 16px;
+    }
+    .cell {
+      aspect-ratio: 1 / 1;
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.02);
+      font-size: 42px; font-weight: 800; letter-spacing: 2px;
+      display: grid; place-items: center;
+      cursor: pointer;
+      transition: transform .08s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+      user-select: none;
+    }
+    .cell:hover { transform: translateY(-1px); background: rgba(255,255,255,0.06); }
+    .cell:active { transform: translateY(1px) scale(.98); }
+    .cell[aria-disabled="true"] { cursor: not-allowed; opacity: .85; }
+    .cell.x { color: var(--x); text-shadow: 0 0 10px rgba(96,165,250,.4); }
+    .cell.o { color: var(--o); text-shadow: 0 0 10px rgba(244,114,182,.4); }
+    .cell.win { outline: 2px solid var(--win); box-shadow: 0 0 0 6px rgba(52,211,153,.15) inset; }
+
+    .controls { display: flex; gap: 8px; justify-content: space-between; align-items: center; }
+    .buttons { display: flex; gap: 8px; }
+
+    button.btn {
+      padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06); color: var(--text); font-weight: 600; cursor: pointer;
+      transition: transform .08s ease, background .2s ease, border-color .2s ease;
+    }
+    button.btn:hover { background: rgba(255,255,255,0.12); }
+    button.btn:active { transform: translateY(1px); }
+
+    .legend { font-size: 12px; color: var(--muted); }
+    .badge { padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.16); }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <main class="card" role="main" aria-labelledby="title">
-    <section class="left">
+  <div class="card" role="application" aria-label="Jogo da Velha">
+    <div class="header">
       <div>
-        <span class="badge">Docker + Apache</span>
+        <div class="title">Jogo da Velha</div>
+        <div id="status" class="status" aria-live="polite">Vez de <strong>X</strong></div>
       </div>
-      <h1 id="title">Olá, mundo!</h1>
-      <p>Esta página simples confirma que o servidor Apache dentro do container está servindo conteúdo corretamente.</p>
+      <div class="badge legend" id="score">X 0 × 0 O</div>
+    </div>
 
-      <div class="panel">
-        <div class="meta">Acesso:</div>
-        <pre>http://localhost:8080/</pre>
-        <div class="meta" style="margin-top:8px">Arquivo servido:</div>
-        <pre>/usr/local/apache2/htdocs/index.html</pre>
+    <div id="board" class="board" role="grid" aria-label="Tabuleiro 3 por 3">
+      <!-- 9 células -->
+      <button class="cell" role="gridcell" aria-label="célula 1" data-index="0"></button>
+      <button class="cell" role="gridcell" aria-label="célula 2" data-index="1"></button>
+      <button class="cell" role="gridcell" aria-label="célula 3" data-index="2"></button>
+      <button class="cell" role="gridcell" aria-label="célula 4" data-index="3"></button>
+      <button class="cell" role="gridcell" aria-label="célula 5" data-index="4"></button>
+      <button class="cell" role="gridcell" aria-label="célula 6" data-index="5"></button>
+      <button class="cell" role="gridcell" aria-label="célula 7" data-index="6"></button>
+      <button class="cell" role="gridcell" aria-label="célula 8" data-index="7"></button>
+      <button class="cell" role="gridcell" aria-label="célula 9" data-index="8"></button>
+    </div>
+
+    <div class="controls">
+      <div class="legend">Dica: clique nas casas para jogar. Primeiro joga o X.</div>
+      <div class="buttons">
+        <button id="reset" class="btn" type="button">Reiniciar</button>
+        <button id="clearScore" class="btn" type="button" title="Zerar placar">Zerar Placar</button>
       </div>
+    </div>
+  </div>
 
-      <div class="panel" style="display:flex;gap:8px;align-items:center">
-        <button id="ping">Verificar servidor</button>
-        <button class="secondary" id="user">Info do navegador</button>
-      </div>
-    </section>
+  <script>
+    (function(){
+      const statusEl = document.getElementById('status');
+      const boardEl = document.getElementById('board');
+      const cells = Array.from(document.querySelectorAll('.cell'));
+      const btnReset = document.getElementById('reset');
+      const btnClearScore = document.getElementById('clearScore');
+      const scoreEl = document.getElementById('score');
 
-    <aside class="right">
-      <div class="panel">
-        <div class="meta">Status do teste</div>
-        <div id="status" style="margin-top:8px;color:#0b2546;font-weight:700">Pronto</div>
-      </div>
+      const WINS = [
+        [0,1,2],[3,4,5],[6,7,8], // linhas
+        [0,3,6],[1,4,7],[2,5,8], // colunas
+        [0,4,8],[2,4,6]          // diagonais
+      ];
 
-      <div class="panel">
-        <div class="meta">Informações</div>
-        <div style="margin-top:8px"><strong>Última verificação:</strong> <span id="time">—</span></div>
-        <div style="margin-top:6px;font-size:13px;color:var(--muted)"><span id="agent">—</span></div>
-      </div>
-    </aside>
+      let board, xIsNext, ended;
+      let score = { X: 0, O: 0 };
 
-    <footer>
-      Atualize a página ou clique em "Verificar servidor". Se o Docker Compose mapear 8080 → 80, abra http://localhost:8080
-    </footer>
-  </main>
-</div>
+      function init() {
+        board = Array(9).fill(null);
+        xIsNext = true;
+        ended = false;
+        cells.forEach(c => { c.textContent = ''; c.classList.remove('x','o','win'); c.setAttribute('aria-disabled','false'); });
+        renderStatus();
+      }
 
-<script>
-  const statusEl = document.getElementById('status');
-  const timeEl = document.getElementById('time');
-  const agentEl = document.getElementById('agent');
-  const pingBtn = document.getElementById('ping');
-  const userBtn = document.getElementById('user');
+      function renderStatus(msg) {
+        if (msg) { statusEl.innerHTML = msg; return; }
+        statusEl.innerHTML = `Vez de <strong>${xIsNext ? 'X' : 'O'}</strong>`;
+      }
 
-  function setTime(){ timeEl.textContent = new Date().toLocaleString(); }
-  setTime();
+      function renderScore() {
+        scoreEl.textContent = `X ${score.X} × ${score.O} O`;
+      }
 
-  pingBtn.addEventListener('click', async () => {
-    statusEl.textContent = 'Verificando...';
-    try {
-      // Tentativa simples de fetch para o próprio recurso raiz
-      const resp = await fetch(window.location.href, { method: 'GET', cache: 'no-store' });
-      statusEl.textContent = resp.ok ? 'Servidor respondeu: OK (' + resp.status + ')' : 'Resposta: ' + resp.status;
-    } catch (err) {
-      statusEl.textContent = 'Erro: não foi possível conectar ao servidor';
-    }
-    setTime();
-  });
+      function setCell(i, mark) {
+        board[i] = mark;
+        const cell = cells[i];
+        cell.textContent = mark;
+        cell.classList.add(mark.toLowerCase());
+        cell.setAttribute('aria-disabled','true');
+      }
 
-  userBtn.addEventListener('click', () => {
-    agentEl.textContent = navigator.userAgent;
-    setTime();
-  });
+      function checkWinner() {
+        for (const [a,b,c] of WINS) {
+          if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+            return { winner: board[a], line: [a,b,c] };
+          }
+        }
+        if (board.every(Boolean)) return { draw: true };
+        return null;
+      }
+
+      function finish(result) {
+        ended = true;
+        if (result.winner) {
+          result.line.forEach(i => cells[i].classList.add('win'));
+          score[result.winner]++;
+          renderScore();
+          renderStatus(`Vitória de <strong>${result.winner}</strong>! 🎉`);
+        } else if (result.draw) {
+          renderStatus('Deu velha! Empate.');
+        }
+      }
+
+      function onCellClick(e) {
+        const i = Number(e.currentTarget.dataset.index);
+        if (ended || board[i]) return;
+        const mark = xIsNext ? 'X' : 'O';
+        setCell(i, mark);
+        const result = checkWinner();
+        if (result) return finish(result);
+        xIsNext = !xIsNext;
+        renderStatus();
+      }
+
+      // Eventos
+      cells.forEach(cell => cell.addEventListener('click', onCellClick));
+      btnReset.addEventListener('click', init);
+      btnClearScore.addEventListener('click', () => { score = {X:0, O:0}; renderScore(); init(); });
+
+      // Init
+      renderScore();
+      init();
+
+      // Atalhos de teclado opcionais: R para reiniciar
+      document.addEventListener('keydown', (e) => {
+        if (e.key.toLowerCase() === 'r') init();
+      });
+    })();
+  </script>
+</body>
+</html>
