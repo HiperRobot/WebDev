@@ -22,4 +22,6 @@ from django.urls.conf import include
 urlpatterns = [
     path("adm/", admin.site.urls),
     path('contatos/', include('contatos.urls')),
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('seguranca/', views.homeSec, name='sec-home'),
 ]
